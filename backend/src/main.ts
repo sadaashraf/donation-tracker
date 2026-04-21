@@ -5,11 +5,15 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors({ origin: 'http://localhost:5173' });
+  app.enableCors({
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', { exclude: ['/uploads/(.*)'] });
 
   await app.listen(process.env.PORT ?? 3000);
   console.log(`Backend running on http://localhost:${process.env.PORT ?? 3000}`);

@@ -32,7 +32,7 @@ import { YearPlan } from './year-plans/year-plan.entity';
     }),
 
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', 'uploads'),
+      rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
     }),
 
