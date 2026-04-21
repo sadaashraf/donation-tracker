@@ -58,4 +58,4 @@ export const updateProfile = (data)        => request('/profile', {
 });
 
 // ── Helpers ───────────────────────────────────────────────
-export const proofUrl = (filename) => filename ? `/uploads/${filename}` : null;
+export const proofUrl = (filename) => filename ? `http://localhost:3000/uploads/${filename}` : null;

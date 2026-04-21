@@ -372,13 +372,10 @@ export default function PaymentsScreen({ setScreen }) {
             </div>
           )}
 
-          <div className="mt-4">
+          <div className="mt-3 flex justify-end">
             <button onClick={handleSubmit} disabled={submitting || !memberId || !amount || !date}
-              className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2
-                         hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                         shadow-md shadow-blue-200">
-              <Save size={17} />
-              {submitting ? "Saving payment..." : "Submit Payment"}
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
+              <Save size={16} /> {submitting ? "Saving..." : "Submit Payment"}
             </button>
           </div>
         </div>
