@@ -9,7 +9,7 @@ export default function ProfileScreen({ onBack }) {
   const [form, setForm] = useState({ name: "", email: "", phone: "", location: "" });
   const [plan, setPlan] = useState("Pro Plan");
   const [memberSince, setMemberSince] = useState("2023");
-  const [saved, setSaved]   = useState(false);
+  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
@@ -51,7 +51,7 @@ export default function ProfileScreen({ onBack }) {
               </div>
               <div className="text-center">
                 <p className="font-bold text-gray-900 text-base">{form.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">Member since Jan {memberSince}</p>
+                <p className="text-xs text-gray-400 mt-0.5">Member alex Jan {memberSince}</p>
               </div>
               <span className="bg-blue-50 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full">{plan}</span>
             </div>

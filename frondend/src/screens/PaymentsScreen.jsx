@@ -1,7 +1,98 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, CreditCard, ChevronDown, Search, Clock, Upload, Save, X, Eye, ImageOff, Trash2, Pencil, CheckCircle } from "lucide-react";
+import { Bell, CreditCard, ChevronDown, Search, Clock, Upload, Save, X, Eye, ImageOff, Trash2, Pencil, CheckCircle, UserSearch } from "lucide-react";
 import ScreenHeader from "../components/ui/ScreenHeader";
 import { fetchPayments, createPayment, updatePayment, deletePayment, fetchMembers, fetchYearPlans, fetchMemberSummary, proofUrl } from "../api";
+
+// ── Member autocomplete search ────────────────────────────
+function MemberSearch({ members, selectedId, onSelect }) {
+  const [query, setQuery]       = useState("");
+  const [open, setOpen]         = useState(false);
+  const [focused, setFocused]   = useState(false);
+  const wrapRef = useRef(null);
+
+  // When a member is already selected, show their name in the input
+  const selected = members.find(m => m.id === +selectedId);
+
+  const filtered = query.trim() === ""
+    ? []
+    : members.filter(m => {
+        const q = query.toLowerCase();
+        return m.name.toLowerCase().includes(q) ||
+               (m.fatherName ?? "").toLowerCase().includes(q);
+      }).slice(0, 8);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = e => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSelect = (m) => {
+    onSelect(m.id);
+    setQuery("");
+    setOpen(false);
+  };
+
+  const handleClear = () => { onSelect(""); setQuery(""); };
+
+  return (
+    <div ref={wrapRef} className="relative">
+      {selected && !focused ? (
+        // Show selected member as a chip
+        <div className="flex items-center gap-2 border border-blue-400 ring-2 ring-blue-50 rounded-xl px-3 py-2.5 bg-white">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 truncate">{selected.name}</p>
+            {selected.fatherName && <p className="text-xs text-gray-400 truncate">S/O {selected.fatherName}</p>}
+          </div>
+          <button onClick={handleClear} className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
+            <X size={14} />
+          </button>
+        </div>
+      ) : (
+        // Search input
+        <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-3
+                        focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-50 transition-all bg-white">
+          <UserSearch size={14} className="text-gray-400 flex-shrink-0" />
+          <input
+            value={query}
+            onChange={e => { setQuery(e.target.value); setOpen(true); }}
+            onFocus={() => { setFocused(true); setOpen(true); }}
+            onBlur={() => setTimeout(() => setFocused(false), 150)}
+            placeholder="Type name or father's name..."
+            className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent min-w-0"
+          />
+          {query && <button onClick={() => setQuery("")} className="text-gray-400 hover:text-gray-600"><X size={13} /></button>}
+        </div>
+      )}
+
+      {/* Suggestions dropdown */}
+      {open && filtered.length > 0 && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+          {filtered.map(m => (
+            <button key={m.id} onMouseDown={() => handleSelect(m)}
+              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-50 last:border-0">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold flex-shrink-0">
+                {m.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">{m.name}</p>
+                {m.fatherName && <p className="text-xs text-gray-400 truncate">S/O {m.fatherName}</p>}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* No results hint */}
+      {open && query.trim() !== "" && filtered.length === 0 && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 px-4 py-3">
+          <p className="text-xs text-gray-400">No members match "{query}"</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const statusStyle = s => ({
   Paid:    "bg-green-50 text-green-600",
@@ -26,25 +117,30 @@ function Toast({ message, onDone }) {
 
 // ── Receipt preview modal ─────────────────────────────────
 function ReceiptModal({ src, onClose }) {
-  const isImage = src && /\.(jpg|jpeg|png|gif|webp)$/i.test(src);
+  const isImage = src && /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(src);
+  const isPdf   = src && /\.pdf$/i.test(src);
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-lg w-full" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[200] p-4"
+         onClick={onClose}>
+      <div className="bg-white rounded-2xl overflow-hidden shadow-2xl w-full max-w-lg"
+           onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <p className="text-sm font-bold text-gray-900">Proof of Payment</p>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
             <X size={16} className="text-gray-500" />
           </button>
         </div>
-        <div className="p-4">
-          {src
-            ? isImage
-              ? <img src={src} alt="Receipt" className="w-full rounded-xl object-contain max-h-80" />
-              : <a href={src} target="_blank" rel="noreferrer" className="text-blue-600 text-sm font-semibold underline">Open PDF</a>
-            : <div className="flex flex-col items-center justify-center gap-2 py-10 text-gray-400">
-                <ImageOff size={32} /><p className="text-sm">No receipt uploaded</p>
-              </div>
-          }
+        <div className="p-4 flex items-center justify-center min-h-[200px]">
+          {isImage && <img src={src} alt="Receipt" className="w-full rounded-xl object-contain max-h-96" />}
+          {isPdf   && <a href={src} target="_blank" rel="noreferrer"
+                        className="text-blue-600 text-sm font-semibold underline">Open PDF Receipt</a>}
+          {!isImage && !isPdf && src && <img src={src} alt="Receipt" className="w-full rounded-xl object-contain max-h-96" />}
+          {!src && (
+            <div className="flex flex-col items-center gap-2 text-gray-400">
+              <ImageOff size={32} /><p className="text-sm">No receipt uploaded</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -224,18 +320,7 @@ export default function PaymentsScreen({ setScreen }) {
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 items-end">
             <div className="col-span-2 md:col-span-1">
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">Member</label>
-              <div className="relative">
-                <select value={memberId} onChange={e => setMemberId(e.target.value)}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-700 appearance-none outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all">
-                  <option value="">Select member</option>
-                  {members.map(m => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}{m.fatherName ? ` S/O ${m.fatherName}` : ''} — #{1000 + m.id}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
+              <MemberSearch members={members} selectedId={memberId} onSelect={setMemberId} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">Year</label>
@@ -287,10 +372,13 @@ export default function PaymentsScreen({ setScreen }) {
             </div>
           )}
 
-          <div className="mt-3 flex justify-end">
+          <div className="mt-4">
             <button onClick={handleSubmit} disabled={submitting || !memberId || !amount || !date}
-              className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
-              <Save size={16} /> {submitting ? "Saving..." : "Submit Payment"}
+              className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2
+                         hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed
+                         shadow-md shadow-blue-200">
+              <Save size={17} />
+              {submitting ? "Saving payment..." : "Submit Payment"}
             </button>
           </div>
         </div>
@@ -320,8 +408,8 @@ export default function PaymentsScreen({ setScreen }) {
           {loading ? (
             <div className="text-center py-8 text-sm text-gray-400">Loading...</div>
           ) : (
-            <div className="overflow-x-auto -mx-1 px-1">
-              <table className="w-full min-w-[520px]">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full" style={{ minWidth: 560 }}>
                 <thead>
                   <tr className="border-b border-gray-100">
                     {["MEMBER", "YEAR", "AMOUNT", "DATE", "PROOF", "ACTIONS"].map((h, i) => (

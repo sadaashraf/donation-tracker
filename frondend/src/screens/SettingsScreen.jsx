@@ -4,7 +4,7 @@ import SettingRow from "../components/ui/SettingRow";
 
 export default function SettingsScreen({ setSubScreen }) {
   const menuItems = [
-    { key: "profile", icon: User, iconBg: "bg-blue-500", label: "Profile", value: "Alex Johnson · alex@email.com" },
+    { key: "profile", icon: User, iconBg: "bg-blue-500", label: "Profile", value: "Ashraf · nayeemashraf92@email.com" },
     { key: "notifications", icon: Bell, iconBg: "bg-purple-500", label: "Notifications", value: "Payment due, New member alerts" },
     { key: "security", icon: Shield, iconBg: "bg-red-500", label: "Security", value: "2FA enabled · Password protected" },
     { key: "plans", icon: CreditCard, iconBg: "bg-teal-500", label: "Plans & Billing", value: "Pro Plan · $29/month" },
@@ -29,8 +29,8 @@ export default function SettingsScreen({ setSubScreen }) {
         <div className="bg-blue-600 rounded-2xl p-4 flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-base">AJ</div>
           <div className="flex-1">
-            <p className="text-white font-bold text-sm">Alex Johnson</p>
-            <p className="text-blue-100 text-xs mt-0.5">Pro Plan · Member since 2023</p>
+            <p className="text-white font-bold text-sm">Ashraf</p>
+            <p className="text-blue-100 text-xs mt-0.5">Pro Plan · Member since 2026</p>
           </div>
           <button onClick={() => setSubScreen("profile")}
             className="bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
