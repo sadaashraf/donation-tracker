@@ -13,3 +13,4 @@ export default function ScreenHeader({ title, onBack, actions }) {
     </div>
   );
 }
+// This component renders a screen header with an optional back button, a title, and additional actions. The back button is displayed if the `onBack` prop is provided, allowing users to navigate back to the previous screen. The title is displayed prominently in the center, and any additional actions can be passed as children to the component.""
