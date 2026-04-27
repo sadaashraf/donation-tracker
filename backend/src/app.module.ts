@@ -8,10 +8,6 @@ import { PaymentsModule } from './payments/payments.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ProfileModule } from './profile/profile.module';
 import { YearPlansModule } from './year-plans/year-plans.module';
-import { Member } from './members/member.entity';
-import { Payment } from './payments/payment.entity';
-import { Profile } from './profile/profile.entity';
-import { YearPlan } from './year-plans/year-plan.entity';
 
 @Module({
   imports: [
@@ -19,16 +15,20 @@ import { YearPlan } from './year-plans/year-plan.entity';
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get('DB_HOST', 'localhost'),
-        port: config.get<number>('DB_PORT', 5432),
-        username: config.get('DB_USERNAME', 'postgres'),
-        password: config.get('DB_PASSWORD', 'postgres'),
-        database: config.get('DB_NAME', 'MMS_db'),
-        entities: [Member, Payment, Profile, YearPlan],
-        synchronize: true,
-      }),
+      useFactory: (config: ConfigService) => {
+        const isProduction = process.env.NODE_ENV === 'production';
+        return {
+          type: 'postgres',
+          url: isProduction ? process.env.DATABASE_URL : undefined,
+          host: !isProduction ? config.get('DB_HOST', 'localhost') : undefined,
+          port: !isProduction ? config.get<number>('DB_PORT', 5432) : undefined,
+          username: !isProduction ? config.get('DB_USERNAME', 'postgres') : undefined,
+          password: !isProduction ? config.get('DB_PASSWORD', 'postgres') : undefined,
+          database: !isProduction ? config.get('DB_NAME', 'MMS_db') : undefined,
+          entities: ['dist/**/*.entity{.ts,.js}'],
+          synchronize: true,
+        }
+      },
     }),
 
     ServeStaticModule.forRoot({
@@ -43,4 +43,4 @@ import { YearPlan } from './year-plans/year-plan.entity';
     YearPlansModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }
