@@ -250,12 +250,12 @@ export default function PaymentsScreen({ setScreen }) {
 
   const load = () => {
     setLoading(true);
-    fetchPayments(searchTerm, yearFilter)
+    fetchPayments(searchTerm, yearFilter, memberId)
       .then(setPayments)
       .catch(console.error)
       .finally(() => setLoading(false));
   };
-  useEffect(() => { load(); }, [searchTerm, yearFilter]);
+  useEffect(() => { load(); }, [searchTerm, yearFilter, memberId]);
 
   const refreshSummary = () => {
     if (memberId && year) fetchMemberSummary(memberId, year).then(setSummary).catch(() => {});
@@ -268,6 +268,7 @@ export default function PaymentsScreen({ setScreen }) {
 
   const handleSubmit = async () => {
     if (!memberId || !amount || !date || !year) return;
+    if (!receipt) { setToast(""); alert("Proof of payment is required."); return; }
     setSubmitting(true);
     try {
       const fd = new FormData();
@@ -277,7 +278,7 @@ export default function PaymentsScreen({ setScreen }) {
       fd.append("paymentDate", date);
       if (receipt?.file) fd.append("proof", receipt.file);
       await createPayment(fd);
-      setAmount(""); setDate(""); setReceipt(null);
+      setAmount(""); setDate(""); setReceipt(null); setMemberId(""); setYear(plans[0]?.year ?? "");
       if (fileInputRef.current) fileInputRef.current.value = "";
       refreshSummary();
       load();
@@ -346,18 +347,28 @@ export default function PaymentsScreen({ setScreen }) {
                 className="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Proof</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Proof <span className="text-red-500">*</span>
+              </label>
               {receipt ? (
-                <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50">
-                  <img src={receipt.previewUrl} alt="thumb" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
-                  <p className="text-xs text-gray-600 truncate flex-1">{receipt.file.name}</p>
-                  <button onClick={() => { setReceipt(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                    className="text-gray-400 hover:text-red-500 transition-colors"><X size={14} /></button>
+                <div className="border border-green-200 bg-green-50 rounded-xl overflow-hidden">
+                  <img src={receipt.previewUrl} alt="thumb" className="w-full h-20 object-cover" />
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <CheckCircle size={13} className="text-green-600 flex-shrink-0" />
+                    <p className="text-xs text-green-700 font-medium truncate flex-1">{receipt.file.name}</p>
+                    <button onClick={() => { setReceipt(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                      className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
+                      <X size={13} />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <button onClick={() => fileInputRef.current?.click()}
-                  className="w-full border border-dashed border-gray-200 rounded-xl py-3 flex items-center justify-center gap-2 text-sm text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors">
-                  <Upload size={15} /> Upload
+                  className="w-full border-2 border-dashed border-gray-200 rounded-xl py-4 flex flex-col items-center justify-center gap-1
+                             hover:border-blue-300 hover:bg-blue-50 transition-all group">
+                  <Upload size={18} className="text-gray-300 group-hover:text-blue-400 transition-colors" />
+                  <span className="text-xs text-gray-400 group-hover:text-blue-500 font-medium">Upload Receipt</span>
+                  <span className="text-[10px] text-gray-300">JPG, PNG or PDF</span>
                 </button>
               )}
             </div>
@@ -373,7 +384,7 @@ export default function PaymentsScreen({ setScreen }) {
           )}
 
           <div className="mt-3 flex justify-end">
-            <button onClick={handleSubmit} disabled={submitting || !memberId || !amount || !date}
+            <button onClick={handleSubmit} disabled={submitting || !memberId || !amount || !date || !receipt}
               className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
               <Save size={16} /> {submitting ? "Saving..." : "Submit Payment"}
             </button>

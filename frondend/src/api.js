@@ -1,12 +1,25 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
 async function request(path, options = {}) {
-  const res = await fetch(`${BASE_URL}/api${path}`, options);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message ?? `Request failed: ${res.status}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch(`${BASE_URL}/api${path}`, {
+      ...options,
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message ?? `Request failed: ${res.status}`);
+    }
+    return res.status === 204 ? null : res.json();
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Request timed out. Please try again.');
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-  return res.json();
 }
 
 // ── Year Plans ────────────────────────────────────────────

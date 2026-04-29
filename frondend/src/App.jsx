@@ -27,7 +27,7 @@ function SidebarNav({ active, setScreen }) {
     <aside className="hidden md:flex flex-col w-20 xl:w-56 bg-white border-r border-gray-100 flex-shrink-0">
       <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
         <AppLogo />
-        <span className="hidden xl:block text-base font-bold text-gray-900 truncate">MMS</span>
+        <span className="hidden xl:block text-base font-bold text-gray-900 truncate">Donation Tracker</span>
       </div>
       <nav className="flex flex-col gap-1 p-3 flex-1">
         {navItems.map(({ key, icon: Icon, label }) => (
@@ -53,7 +53,7 @@ function SidebarNav({ active, setScreen }) {
 }
 
 export default function App() {
-  const [screen, setScreen]     = useState("dashboard");
+  const [screen, setScreen] = useState("dashboard");
   const [subScreen, setSubScreen] = useState(null);
 
   const navigateTo = (s) => { setScreen(s); setSubScreen(null); };

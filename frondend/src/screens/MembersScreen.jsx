@@ -1,27 +1,109 @@
 import { useState, useEffect, useCallback } from "react";
-import { Bell, Search, ChevronDown, Pencil, Trash2, X, Users, Plus } from "lucide-react";
+import { Bell, Search, ChevronDown, Pencil, Trash2, X, Users, Plus, AlertCircle } from "lucide-react";
 import AppLogo from "../components/ui/AppLogo";
 import { fetchMembers, fetchMemberSummary, fetchYearPlans, createMember, updateMember, deleteMember } from "../api";
 
-const COLORS = ["bg-green-500", "bg-blue-400", "bg-purple-400", "bg-orange-400", "bg-teal-500", "bg-pink-400", "bg-red-400", "bg-indigo-400"];
-const colorFor = (id) => COLORS[id % COLORS.length];
+const COLORS = ["bg-green-500","bg-blue-400","bg-purple-400","bg-orange-400","bg-teal-500","bg-pink-400","bg-red-400","bg-indigo-400"];
+const colorFor = (id)   => COLORS[id % COLORS.length];
 const initials = (name) => name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
 const statusStyle = s => ({
-  Paid: "bg-green-50 text-green-600",
+  Paid:    "bg-green-50 text-green-600",
   Partial: "bg-orange-50 text-orange-500",
-  Unpaid: "bg-red-50 text-red-500",
+  Unpaid:  "bg-red-50 text-red-500",
 }[s] ?? "bg-gray-100 text-gray-500");
+
+// ── Validation ────────────────────────────────────────────
+function validateMemberForm({ name, fatherName, phone }) {
+  const errors = {};
+  if (!name.trim()) {
+    errors.name = "Full name is required.";
+  } else if (name.trim().length < 4) {
+    errors.name = "Name must be at least 4 characters.";
+  } else if (!/^[A-Z]/.test(name.trim())) {
+    errors.name = "Name must start with an uppercase letter.";
+  }
+  if (fatherName.trim()) {
+    if (fatherName.trim().length < 4) {
+      errors.fatherName = "Father's name must be at least 4 characters.";
+    } else if (!/^[A-Z]/.test(fatherName.trim())) {
+      errors.fatherName = "Father's name must start with an uppercase letter.";
+    }
+  }
+  if (phone.trim()) {
+    if (!/^\d{11}$/.test(phone.trim())) {
+      errors.phone = "Phone must be exactly 11 digits.";
+    }
+  }
+  return errors;
+}
+
+function FieldError({ msg }) {
+  if (!msg) return null;
+  return (
+    <p className="flex items-center gap-1 text-xs text-red-500 mt-1 font-medium">
+      <AlertCircle size={11} /> {msg}
+    </p>
+  );
+}
+
+function MemberForm({ initial = { name: "", fatherName: "", phone: "" }, onSubmit, saving, submitLabel }) {
+  const [form, setForm]   = useState(initial);
+  const [errors, setErrors] = useState({});
+  const set = k => e => {
+    let val = e.target.value;
+    if (k === "phone") val = val.replace(/\D/g, "").slice(0, 11);
+    setForm(f => ({ ...f, [k]: val }));
+    if (errors[k]) setErrors(prev => ({ ...prev, [k]: "" }));
+  };
+
+  const handleSubmit = () => {
+    const errs = validateMemberForm(form);
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    onSubmit(form);
+  };
+
+  const inputClass = (field) =>
+    `w-full border rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none transition-all
+     ${errors[field] ? "border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-50" : "border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-50"}`;
+
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+            Full Name <span className="text-red-500">*</span>
+          </label>
+          <input placeholder="e.g. Muhammad Ali" value={form.name} onChange={set("name")} className={inputClass("name")} />
+          <FieldError msg={errors.name} />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Father's Name</label>
+          <input placeholder="e.g. Muhammad Akbar" value={form.fatherName} onChange={set("fatherName")} className={inputClass("fatherName")} />
+          <FieldError msg={errors.fatherName} />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number</label>
+          <input type="tel" inputMode="numeric" placeholder="03001234567" value={form.phone} onChange={set("phone")} className={inputClass("phone")} maxLength={11} />
+          <FieldError msg={errors.phone} />
+        </div>
+      </div>
+      <div className="mt-3 flex justify-end">
+        <button onClick={handleSubmit} disabled={saving}
+          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 hover:bg-blue-700 transition-all disabled:opacity-50">
+          <Plus size={16} /> {saving ? "Saving..." : submitLabel}
+        </button>
+      </div>
+    </>
+  );
+}
 
 // ── Edit member modal ─────────────────────────────────────
 function EditMemberModal({ member, onClose, onSaved }) {
-  const [form, setForm] = useState({ name: member.name, fatherName: member.fatherName ?? "", phone: member.phone ?? "" });
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+  const [error, setError]   = useState("");
 
-  const handleSave = async () => {
-    if (!form.name.trim()) { setError("Name is required"); return; }
+  const handleSubmit = async (form) => {
     setSaving(true);
     try { await updateMember(member.id, form); onSaved(); onClose(); }
     catch (e) { setError(e.message); }
@@ -42,29 +124,12 @@ function EditMemberModal({ member, onClose, onSaved }) {
         </div>
         <div className="px-6 py-5">
           {error && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4"><p className="text-xs text-red-600 font-medium">{error}</p></div>}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name <span className="text-red-500">*</span></label>
-              <input placeholder="e.g. Muhammad Ali" value={form.name} onChange={set("name")}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Father's Name</label>
-              <input placeholder="e.g. Muhammad Akbar" value={form.fatherName} onChange={set("fatherName")}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number</label>
-              <input type="tel" placeholder="e.g. 0300 1234567" value={form.phone} onChange={set("phone")}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all" />
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-3 px-6 pb-6">
-          <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="flex-1 py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
+          <MemberForm
+            initial={{ name: member.name, fatherName: member.fatherName ?? "", phone: member.phone ?? "" }}
+            onSubmit={handleSubmit}
+            saving={saving}
+            submitLabel="Save Changes"
+          />
         </div>
       </div>
     </div>
@@ -95,7 +160,6 @@ function SimpleCard({ member, onEdit, onDelete }) {
 // ── Detail card (Paid / Partial / Unpaid tabs) ────────────
 function DetailCard({ member, year, onEdit, onDelete }) {
   const [summary, setSummary] = useState(null);
-
   useEffect(() => {
     if (!year) return;
     fetchMemberSummary(member.id, year).then(setSummary).catch(() => setSummary(null));
@@ -139,17 +203,15 @@ function DetailCard({ member, year, onEdit, onDelete }) {
 
 // ── Main screen ───────────────────────────────────────────
 export default function MembersScreen({ refresh }) {
-  const [search, setSearch] = useState("");
-  const [year, setYear] = useState("");
+  const [search, setSearch]             = useState("");
+  const [year, setYear]                 = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [members, setMembers] = useState([]);
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [editMember, setEditMember] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [form, setForm] = useState({ name: "", fatherName: "", phone: "" });
-  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+  const [members, setMembers]           = useState([]);
+  const [plans, setPlans]               = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [editMember, setEditMember]     = useState(null);
+  const [saving, setSaving]             = useState(false);
+  const [formError, setFormError]       = useState("");
   const statusFilters = ["All", "Paid", "Partial", "Unpaid"];
 
   useEffect(() => {
@@ -169,12 +231,10 @@ export default function MembersScreen({ refresh }) {
 
   useEffect(() => { load(); }, [load, refresh]);
 
-  const handleAdd = async () => {
-    if (!form.name.trim()) { setFormError("Member name is required."); return; }
+  const handleAdd = async (form) => {
     setSaving(true); setFormError("");
     try {
       await createMember(form);
-      setForm({ name: "", fatherName: "", phone: "" });
       load();
     } catch (e) { setFormError(e.message); }
     finally { setSaving(false); }
@@ -206,29 +266,7 @@ export default function MembersScreen({ refresh }) {
             <h2 className="text-base font-bold text-gray-900">Add New Member</h2>
           </div>
           {formError && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-3"><p className="text-xs text-red-600 font-medium">{formError}</p></div>}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name <span className="text-red-500">*</span></label>
-              <input placeholder="e.g. Muhammad Ali" value={form.name} onChange={set("name")}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Father's Name</label>
-              <input placeholder="e.g. Muhammad Akbar" value={form.fatherName} onChange={set("fatherName")}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number</label>
-              <input type="tel" placeholder="e.g. 0300 1234567" value={form.phone} onChange={set("phone")}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all" />
-            </div>
-          </div>
-          <div className="mt-3 flex justify-end">
-            <button onClick={handleAdd} disabled={saving}
-              className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
-              <Plus size={16} /> {saving ? "Saving..." : "Add Member"}
-            </button>
-          </div>
+          <MemberForm onSubmit={handleAdd} saving={saving} submitLabel="Add Member" />
         </div>
 
         {/* Filters */}
@@ -260,7 +298,6 @@ export default function MembersScreen({ refresh }) {
 
         <p className="text-xs text-gray-400 font-medium px-1">{members.length} members found</p>
 
-        {/* Member list */}
         {loading ? (
           <div className="text-center py-10 text-sm text-gray-400">Loading...</div>
         ) : members.length === 0 ? (
