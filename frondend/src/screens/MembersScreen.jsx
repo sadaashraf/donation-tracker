@@ -212,6 +212,7 @@ export default function MembersScreen({ refresh }) {
   const [editMember, setEditMember]     = useState(null);
   const [saving, setSaving]             = useState(false);
   const [formError, setFormError]       = useState("");
+  const [formKey, setFormKey]           = useState(0);
   const statusFilters = ["All", "Paid", "Partial", "Unpaid"];
 
   useEffect(() => {
@@ -235,6 +236,7 @@ export default function MembersScreen({ refresh }) {
     setSaving(true); setFormError("");
     try {
       await createMember(form);
+      setFormKey(k => k + 1);
       load();
     } catch (e) { setFormError(e.message); }
     finally { setSaving(false); }
@@ -266,7 +268,7 @@ export default function MembersScreen({ refresh }) {
             <h2 className="text-base font-bold text-gray-900">Add New Member</h2>
           </div>
           {formError && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-3"><p className="text-xs text-red-600 font-medium">{formError}</p></div>}
-          <MemberForm onSubmit={handleAdd} saving={saving} submitLabel="Add Member" />
+          <MemberForm key={formKey} onSubmit={handleAdd} saving={saving} submitLabel="Add Member" />
         </div>
 
         {/* Filters */}
