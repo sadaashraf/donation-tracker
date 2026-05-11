@@ -18,14 +18,14 @@ function validateMemberForm({ name, fatherName, phone }) {
   const errors = {};
   if (!name.trim()) {
     errors.name = "Full name is required.";
-  } else if (name.trim().length < 4) {
-    errors.name = "Name must be at least 4 characters.";
+  } else if (name.trim().split(/\s+/).filter(Boolean).length < 3) {
+    errors.name = "Name must be at least 3 words.";
   } else if (!/^[A-Z]/.test(name.trim())) {
     errors.name = "Name must start with an uppercase letter.";
   }
   if (fatherName.trim()) {
-    if (fatherName.trim().length < 4) {
-      errors.fatherName = "Father's name must be at least 4 characters.";
+    if (fatherName.trim().split(/\s+/).filter(Boolean).length < 3) {
+      errors.fatherName = "Father's name must be at least 3 words.";
     } else if (!/^[A-Z]/.test(fatherName.trim())) {
       errors.fatherName = "Father's name must start with an uppercase letter.";
     }
@@ -147,6 +147,7 @@ function SimpleCard({ member, onEdit, onDelete }) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900 truncate">{member.name}</p>
           {member.fatherName && <p className="text-xs text-gray-400 mt-0.5">S/O {member.fatherName}</p>}
+          <p className="text-[10px] text-gray-300 mt-0.5">ID: {member.id}</p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button onClick={() => onEdit(member)} className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"><Pencil size={13} /></button>
@@ -174,6 +175,7 @@ function DetailCard({ member, year, onEdit, onDelete }) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900 truncate">{member.name}</p>
           {member.fatherName && <p className="text-xs text-gray-400 mt-0.5">S/O {member.fatherName}</p>}
+          <p className="text-[10px] text-gray-300 mt-0.5">ID: {member.id}</p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           {summary && <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusStyle(summary.status)}`}>{summary.status}</span>}

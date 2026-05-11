@@ -13,6 +13,8 @@ import HelpSupportScreen from "./screens/settings/HelpSupportScreen";
 import BottomNav from "./navigation/BottomNav";
 import TopNav from "./navigation/TopNav";
 import AppLogo from "./components/ui/AppLogo";
+import LoginScreen from "./screens/LoginScreen";
+import RegisterScreen from "./screens/RegisterScreen";
 
 const navItems = [
   { key: "dashboard", icon: Home, label: "Dashboard" },
@@ -22,7 +24,7 @@ const navItems = [
   { key: "settings", icon: Settings, label: "Settings" },
 ];
 
-function SidebarNav({ active, setScreen }) {
+function SidebarNav({ active, setScreen, user }) {
   return (
     <aside className="hidden md:flex flex-col w-20 xl:w-56 bg-white border-r border-gray-100 flex-shrink-0">
       <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
@@ -41,10 +43,10 @@ function SidebarNav({ active, setScreen }) {
       </nav>
       <div className="p-3 border-t border-gray-100">
         <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">As</div>
+      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{user?.fullName?.charAt(0).toUpperCase() ?? "U"}</div>
           <div className="hidden xl:block min-w-0">
-            <p className="text-xs font-semibold text-gray-900 truncate">Ashraf</p>
-            <p className="text-[10px] text-gray-400 truncate">Admin</p>
+            <p className="text-xs font-semibold text-gray-900 truncate">{user?.fullName ?? "User"}</p>
+            <p className="text-[10px] text-gray-400 truncate capitalize">{user?.role ?? "admin"}</p>
           </div>
         </div>
       </div>
@@ -53,8 +55,16 @@ function SidebarNav({ active, setScreen }) {
 }
 
 export default function App() {
+  const [authScreen, setAuthScreen] = useState("login"); // "login" | "register"
+  const [user, setUser] = useState(null);
   const [screen, setScreen] = useState("dashboard");
   const [subScreen, setSubScreen] = useState(null);
+
+  if (!user) {
+    if (authScreen === "register")
+      return <RegisterScreen onNavigateToLogin={() => setAuthScreen("login")} />;
+    return <LoginScreen onLogin={(u) => setUser(u)} onNavigateToRegister={() => setAuthScreen("register")} />;
+  }
 
   const navigateTo = (s) => { setScreen(s); setSubScreen(null); };
 
@@ -79,7 +89,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 md:bg-gray-200 flex flex-col md:flex-row">
-      <SidebarNav active={screen} setScreen={navigateTo} />
+      <SidebarNav active={screen} setScreen={navigateTo} user={user} />
       <main className="flex-1 flex flex-col overflow-hidden relative min-h-screen md:min-h-0">
         {/* Top nav — mobile only */}
         <div className="md:hidden">
