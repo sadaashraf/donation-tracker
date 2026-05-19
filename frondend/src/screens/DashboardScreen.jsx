@@ -5,7 +5,7 @@ import AppLogo from "../components/ui/AppLogo";
 import CustomBar from "../components/ui/CustomBar";
 import { fetchDashboardStats, fetchYearPlans } from "../api";
 
-const MONTH_ORDER = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function StatCard({ icon: Icon, label, value, iconBg, iconColor, trend }) {
   return (
@@ -53,9 +53,9 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function DashboardScreen() {
-  const [stats, setStats]     = useState(null);
-  const [plans, setPlans]     = useState([]);
-  const [year, setYear]       = useState(new Date().getFullYear().toString());
+  const [stats, setStats] = useState(null);
+  const [plans, setPlans] = useState([]);
+  const [year, setYear] = useState(new Date().getFullYear().toString());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function DashboardScreen() {
   }, [year]);
 
   const chartData = (stats?.chartData ?? [])
-    .map(d => ({ month: d.month.slice(0,3), value: parseFloat(d.value) }))
+    .map(d => ({ month: d.month.slice(0, 3), value: parseFloat(d.value) }))
     .sort((a, b) => MONTH_ORDER.indexOf(a.month) - MONTH_ORDER.indexOf(b.month));
 
   const collectionRate = stats?.totalRequired > 0
@@ -111,10 +111,10 @@ export default function DashboardScreen() {
           <>
             {/* Financial stat cards */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-              <StatCard icon={Users}      label="Total Members"   value={stats?.totalMembers ?? 0}                              iconBg="bg-blue-50"   iconColor="text-blue-600" />
-              <StatCard icon={TrendingUp} label="Total Expected"  value={`PKR ${(stats?.totalRequired ?? 0).toLocaleString()}`} iconBg="bg-violet-50" iconColor="text-violet-600" />
-              <StatCard icon={Wallet}     label="Total Received"  value={`PKR ${(stats?.totalReceived ?? 0).toLocaleString()}`} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-              <StatCard icon={AlertCircle} label="Remaining"      value={`PKR ${(stats?.remaining ?? 0).toLocaleString()}`}    iconBg="bg-rose-50"   iconColor="text-rose-600" />
+              <StatCard icon={Users} label="Total Members" value={stats?.totalMembers ?? 0} iconBg="bg-blue-50" iconColor="text-blue-600" />
+              <StatCard icon={TrendingUp} label="Total Expected" value={`PKR ${(stats?.totalRequired ?? 0).toLocaleString()}`} iconBg="bg-violet-50" iconColor="text-violet-600" />
+              <StatCard icon={Wallet} label="Total Received" value={`PKR ${(stats?.totalReceived ?? 0).toLocaleString()}`} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
+              <StatCard icon={AlertCircle} label="Remaining" value={`PKR ${(stats?.remaining ?? 0).toLocaleString()}`} iconBg="bg-rose-50" iconColor="text-rose-600" />
             </div>
 
             {/* Collection progress */}
@@ -135,14 +135,14 @@ export default function DashboardScreen() {
               </div>
             </div>
 
-            {/* Status counts */}
+            {/* Status paid unpaid counts */}
             <div className="grid grid-cols-3 gap-3">
-              <StatusBadge icon={CheckCircle} label="Paid"    count={stats?.paid ?? 0}    bg="bg-emerald-50" border="border-emerald-100" iconColor="text-emerald-600" textColor="text-emerald-600" countColor="text-emerald-700" />
-              <StatusBadge icon={Clock}       label="Partial" count={stats?.partial ?? 0} bg="bg-amber-50"   border="border-amber-100"   iconColor="text-amber-500"  textColor="text-amber-600"   countColor="text-amber-700" />
-              <StatusBadge icon={AlertCircle} label="Unpaid"  count={stats?.unpaid ?? 0}  bg="bg-rose-50"    border="border-rose-100"    iconColor="text-rose-500"   textColor="text-rose-600"    countColor="text-rose-700" />
+              <StatusBadge icon={CheckCircle} label="Paid" count={stats?.paid ?? 0} bg="bg-emerald-50" border="border-emerald-100" iconColor="text-emerald-600" textColor="text-emerald-600" countColor="text-emerald-700" />
+              <StatusBadge icon={Clock} label="Partial" count={stats?.partial ?? 0} bg="bg-amber-50" border="border-amber-100" iconColor="text-amber-500" textColor="text-amber-600" countColor="text-amber-700" />
+              <StatusBadge icon={AlertCircle} label="Unpaid" count={stats?.unpaid ?? 0} bg="bg-rose-50" border="border-rose-100" iconColor="text-rose-500" textColor="text-rose-600" countColor="text-rose-700" />
             </div>
 
-            {/* Monthly chart */}
+            {/* Monthly Collections Screen*/}
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -161,7 +161,7 @@ export default function DashboardScreen() {
                     <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9ca3af" }} />
                     <YAxis hide />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.03)", radius: 8 }} />
-                    <Bar dataKey="value" shape={<CustomBar />} radius={[6,6,0,0]}>
+                    <Bar dataKey="value" shape={<CustomBar />} radius={[6, 6, 0, 0]}>
                       {chartData.map((_, i) => (
                         <Cell key={i} fill={i === chartData.length - 1 ? "#2563eb" : "#bfdbfe"} />
                       ))}
